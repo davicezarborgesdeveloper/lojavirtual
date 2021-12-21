@@ -83,48 +83,45 @@ class SignUpScreen extends StatelessWidget {
                         onSaved: (pass) => user.confirmPassword = pass,
                       ),
                       const SizedBox(height: 16),
-                      SizedBox(
-                        height: 44,
-                        child: RaisedButton(
-                          color: Theme.of(context).primaryColor,
-                          disabledTextColor:
-                              Theme.of(context).primaryColor.withAlpha(100),
-                          textColor: Colors.white,
-                          onPressed: userManager.loading
-                              ? null
-                              : () {
-                                  if (formKey.currentState.validate()) {
-                                    formKey.currentState.save();
-                                    if (user.password != user.confirmPassword) {
-                                      scaffoldKey.currentState
-                                          .showSnackBar(const SnackBar(
-                                        content: Text('Senhas não coincidem'),
-                                        backgroundColor: Colors.red,
-                                      ));
-                                      return;
-                                    }
-                                    userManager.signUp(context,
-                                        user: user,
-                                        onSucess: () => Navigator.pop(context),
-                                        onFail: (e) {
-                                          scaffoldKey.currentState
-                                              .showSnackBar(SnackBar(
-                                            content: Text('Falha ao entrar $e'),
-                                            backgroundColor: Colors.red,
-                                          ));
-                                        });
+                      RaisedButton(
+                        color: Theme.of(context).primaryColor,
+                        disabledTextColor:
+                            Theme.of(context).primaryColor.withAlpha(100),
+                        textColor: Colors.white,
+                        onPressed: userManager.loading
+                            ? null
+                            : () {
+                                if (formKey.currentState.validate()) {
+                                  formKey.currentState.save();
+                                  if (user.password != user.confirmPassword) {
+                                    scaffoldKey.currentState
+                                        .showSnackBar(const SnackBar(
+                                      content: Text('Senhas não coincidem'),
+                                      backgroundColor: Colors.red,
+                                    ));
+                                    return;
                                   }
-                                },
-                          child: userManager.loading
-                              ? const CircularProgressIndicator(
-                                  valueColor:
-                                      AlwaysStoppedAnimation(Colors.white),
-                                )
-                              : const Text(
-                                  'Criar Conta',
-                                  style: TextStyle(fontSize: 18),
-                                ),
-                        ),
+                                  userManager.signUp(context,
+                                      user: user,
+                                      onSucess: () => Navigator.pop(context),
+                                      onFail: (e) {
+                                        scaffoldKey.currentState
+                                            .showSnackBar(SnackBar(
+                                          content: Text('Falha ao entrar $e'),
+                                          backgroundColor: Colors.red,
+                                        ));
+                                      });
+                                }
+                              },
+                        child: userManager.loading
+                            ? const CircularProgressIndicator(
+                                valueColor:
+                                    AlwaysStoppedAnimation(Colors.white),
+                              )
+                            : const Text(
+                                'Criar Conta',
+                                style: TextStyle(fontSize: 15),
+                              ),
                       ),
                     ],
                   );
