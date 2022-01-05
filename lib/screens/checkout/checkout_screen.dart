@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:loja_virtual/common/price_card.dart';
 import 'package:loja_virtual/models/cart_manager.dart';
 import 'package:loja_virtual/models/checkout_manager.dart';
+import 'package:loja_virtual/models/credit_card.dart';
+import 'package:loja_virtual/screens/checkout/components/credit_card_widget.dart';
 import 'package:provider/provider.dart';
+
+import 'components/cpf_field.dart';
 
 class CheckoutScreen extends StatelessWidget {
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+  final CreditCard creditCard = CreditCard();
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProxyProvider<CartManager, CheckoutManager>(
@@ -42,27 +50,49 @@ class CheckoutScreen extends StatelessWidget {
                 ),
               );
             }
-            return ListView(
-              children: <Widget>[
-                PriceCard(
-                  buttonText: 'Finalizar Pedido',
-                  onPressed: () {
-                    checkoutManager.checkout(onStockFail: (e) {
-                      scaffoldKey.currentState.showSnackBar(const SnackBar(
-                        content: Text('Não há estoque o suficiente'),
-                        backgroundColor: Colors.red,
-                      ));
-                      Navigator.of(context)
-                          .popUntil((route) => route.settings.name == '/cart');
-                    }, onSuccess: (order) {
-                      Navigator.of(context)
-                          .popUntil((route) => route.settings.name == '/');
-                      Navigator.of(context)
-                          .pushNamed('/confirmation', arguments: order);
-                    });
-                  },
-                )
-              ],
+            return Form(
+              key: formKey,
+              child: ListView(
+                children: <Widget>[
+                  CreditCardWidget(creditCard),
+                  CpfField(),
+                  PriceCard(
+                    buttonText: 'Finalizar Pedido',
+                    onPressed: () {
+                      if (formKey.currentState.validate()) {
+                        formKey.currentState.save();
+
+                        checkoutManager.checkout(
+                          creditCard: creditCard,
+                          onStockFail: (e) {
+                            scaffoldKey.currentState
+                                .showSnackBar(const SnackBar(
+                              content: Text('Não há estoque o suficiente'),
+                              backgroundColor: Colors.red,
+                            ));
+                            Navigator.of(context).popUntil(
+                                (route) => route.settings.name == '/cart');
+                          },
+                          onPayFail: (e) {
+                            scaffoldKey.currentState.showSnackBar(SnackBar(
+                              content: Text('$e'),
+                              backgroundColor: Colors.red,
+                            ));
+                          },
+                          onSuccess: (order) {
+                            Navigator.of(context).popUntil(
+                                (route) => route.settings.name == '/');
+                            Navigator.of(context).pushNamed(
+                              '/confirmation',
+                              arguments: order,
+                            );
+                          },
+                        );
+                      }
+                    },
+                  )
+                ],
+              ),
             );
           },
         ),

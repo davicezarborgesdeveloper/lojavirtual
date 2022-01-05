@@ -22,7 +22,7 @@ import 'package:provider/provider.dart';
 
 import 'models/product.dart';
 
-void main() {
+void main() async {
   runApp(const MyApp());
 }
 
