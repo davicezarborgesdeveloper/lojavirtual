@@ -22,6 +22,7 @@ class CieloPayment {
       };
       final HttpsCallable callable =
           functions.getHttpsCallable(functionName: 'authorizeCreditCard');
+      callable.timeout = const Duration(seconds: 60);
       final response = await callable.call(dataSale);
       final data = Map<String, dynamic>.from(response.data as LinkedHashMap);
       if (data['success'] as bool) {
@@ -33,6 +34,38 @@ class CieloPayment {
     } catch (e) {
       debugPrint('$e');
       return Future.error('Falha ao processar transação. Tente novamente.');
+    }
+  }
+
+  Future<void> capture(String payId) async {
+    final Map<String, dynamic> captureData = {'payId': payId};
+    final HttpsCallable callable =
+        functions.getHttpsCallable(functionName: 'captureCreditCard');
+    callable.timeout = const Duration(seconds: 60);
+    final response = await callable.call(captureData);
+    final data = Map<String, dynamic>.from(response.data as LinkedHashMap);
+
+    if (data['success'] as bool) {
+      debugPrint('Captura realizada com sucesso');
+    } else {
+      debugPrint('${data['error']['message']}');
+      return Future.error(data['error']['message']);
+    }
+  }
+
+  Future<void> cancel(String payId) async {
+    final Map<String, dynamic> cancelData = {'payId': payId};
+    final HttpsCallable callable =
+        functions.getHttpsCallable(functionName: 'cancelCreditCard');
+    callable.timeout = const Duration(seconds: 60);
+    final response = await callable.call(cancelData);
+    final data = Map<String, dynamic>.from(response.data as LinkedHashMap);
+
+    if (data['success'] as bool) {
+      debugPrint('Cancelamento realizada com sucesso');
+    } else {
+      debugPrint('${data['error']['message']}');
+      return Future.error(data['error']['message']);
     }
   }
 }

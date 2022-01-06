@@ -67,6 +67,7 @@ class OrderTile extends StatelessWidget {
                     onPressed: () {
                       showDialog(
                           context: context,
+                          barrierDismissible: false,
                           builder: (_) => CancelOrderdialog(order));
                     },
                     textColor: Colors.red,

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:loja_virtual/models/cart_manager.dart';
 import 'package:loja_virtual/models/credit_card.dart';
+import 'package:loja_virtual/models/order.dart';
 import 'package:loja_virtual/models/product.dart';
 import 'package:loja_virtual/services/cielo_payment.dart';
 
@@ -32,8 +33,10 @@ class CheckoutManager extends ChangeNotifier {
     loading = true;
 
     final orderId = await _getOrderId();
+
+    String payId;
     try {
-      String payId = await cieloPayment.authorize(
+      payId = await cieloPayment.authorize(
         creditCard: creditCard,
         price: cartManager.totalPrice,
         orderId: orderId.toString(),
@@ -46,22 +49,33 @@ class CheckoutManager extends ChangeNotifier {
       return;
     }
 
-    /* try {
+    try {
       await _decrementStock();
     } catch (e) {
+      cieloPayment.cancel(payId);
       onStockFail(e);
       loading = false;
       debugPrint(e.toString());
     }
 
+    try {
+      await cieloPayment.capture(payId);
+      print('success');
+    } catch (e) {
+      onPayFail(e);
+      loading = false;
+      return;
+    }
+
     final order = Order.fromCartManager(cartManager);
     order.orderId = orderId.toString();
+    order.payId = payId;
 
     order.save();
 
-    cartManager.clear();*/
+    cartManager.clear();
 
-    // onSuccess(order);
+    onSuccess(order);
     loading = false;
   }
 

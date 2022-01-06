@@ -1,9 +1,9 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
-import { CieloConstructor, Cielo, TransactionCreditCardRequestModel, EnumBrands} from 'cielo';
+import { CieloConstructor, Cielo, TransactionCreditCardRequestModel, EnumBrands,CaptureRequestModel,CancelTransactionRequestModel} from 'cielo';
 
-//, CaptureRequestModel, CancelTransactionRequestModel, TransactionCreditCardResponseModel
+//, , , TransactionCreditCardResponseModel
 
 admin.initializeApp(functions.config().firebase);
 
@@ -168,17 +168,122 @@ export const authorizeCreditCard = functions.https.onCall(async (data, context) 
         console.log("Error ", error);
         return {
             "success": false,
-            "error": error
+            "error": {
+                "code": error,
+                "message": error
+            }
         };
     }
 
 });
 
+export const captureCreditCard = functions.https.onCall(async (data, context) => {
+    if(data === null){
+        return {
+            "success": false,
+            "error": {
+                "code": -1,
+                "message": "Dados não informados"
+            }
+        };
+    }
 
+    if(!context.auth){
+        return {
+            "success": false,
+            "error": {
+                "code": -1,
+                "message": "Nenhum usuário logado"
+            }
+        };
+    }
 
-export const helloWorld = functions.https.onCall((data, context) => {
-  return {data: "Hellow from Cloud Functions!!!"};
+    const captureParams: CaptureRequestModel = {
+        paymentId: data.payId,
+    }
+
+    
+    try {
+        const capture = await cielo.creditCard.captureSaleTransaction(captureParams);
+
+        if(capture.status === 2){
+            return {"success": true};
+        } else {
+            return {
+                "success": false,
+                "status": capture.status,
+                "error": {
+                    "code": capture.returnCode,
+                    "message": capture.returnMessage,
+                }
+            };
+        }
+    } catch (error){
+        console.log("Error ", error);
+        return {
+            "success": false,
+            "error": {
+                "code": error,
+                "message": error
+            }
+        };
+    }
 });
+
+export const cancelCreditCard = functions.https.onCall(async (data, context) => {
+    if(data === null){
+        return {
+            "success": false,
+            "error": {
+                "code": -1,
+                "message": "Dados não informados"
+            }
+        };
+    }
+
+    if(!context.auth){
+        return {
+            "success": false,
+            "error": {
+                "code": -1,
+                "message": "Nenhum usuário logado"
+            }
+        };
+    }
+
+    const cancelParams: CancelTransactionRequestModel = {
+        paymentId: data.payId,
+    }
+
+    
+    try {
+        const cancel = await cielo.creditCard.cancelTransaction(cancelParams);
+
+        if(cancel.status === 10 || cancel.status === 11){
+            return {"success": true};
+        } else {
+            return {
+                "success": false,
+                "status": cancel.status,
+                "error": {
+                    "code": cancel.returnCode,
+                    "message": cancel.returnMessage,
+                }
+            };
+        }
+    } catch (error){
+        console.log("Error ", error);
+        return {
+            "success": false,
+            "error": {
+                "code": error,
+                "message": error
+            }
+        };
+    }
+});
+
+
 export const getUserData = functions.https.onCall( async (data, context) => {
     if(!context.auth){
         return {
