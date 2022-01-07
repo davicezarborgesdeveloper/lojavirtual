@@ -14,7 +14,6 @@ class UserManager extends ChangeNotifier {
   final Firestore firestore = Firestore.instance;
 
   User user;
-  bool get isLoggedIn => user != null;
 
   bool _loading = false;
   bool get loading => _loading;
@@ -30,14 +29,17 @@ class UserManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> signIn({User user, Function onFail, Function onSucess}) async {
+  bool get isLoggedIn => user != null;
+
+  Future<void> signIn({User user, Function onFail, Function onSuccess}) async {
     loading = true;
     try {
       final AuthResult result = await auth.signInWithEmailAndPassword(
           email: user.email, password: user.password);
 
       await _loadCurrentUser(firebaseUser: result.user);
-      onSucess();
+
+      onSuccess();
     } on PlatformException catch (e) {
       onFail(getErrorString(e.code));
     }
@@ -46,6 +48,7 @@ class UserManager extends ChangeNotifier {
 
   Future<void> facebookLogin({Function onFail, Function onSuccess}) async {
     loadingFace = true;
+
     final result = await FacebookLogin().logIn(['email', 'public_profile']);
 
     switch (result.status) {
@@ -65,6 +68,8 @@ class UserManager extends ChangeNotifier {
 
           await user.saveData();
 
+          user.saveToken();
+
           onSuccess();
         }
         break;
@@ -74,11 +79,11 @@ class UserManager extends ChangeNotifier {
         onFail(result.errorMessage);
         break;
     }
+
     loadingFace = false;
   }
 
-  Future<void> signUp(BuildContext context,
-      {User user, Function onFail, Function onSucess}) async {
+  Future<void> signUp({User user, Function onFail, Function onSuccess}) async {
     loading = true;
     try {
       final AuthResult result = await auth.createUserWithEmailAndPassword(
@@ -89,7 +94,9 @@ class UserManager extends ChangeNotifier {
 
       await user.saveData();
 
-      onSucess();
+      user.saveToken();
+
+      onSuccess();
     } on PlatformException catch (e) {
       onFail(getErrorString(e.code));
     }
@@ -109,15 +116,13 @@ class UserManager extends ChangeNotifier {
           await firestore.collection('users').document(currentUser.uid).get();
       user = User.fromDocument(docUser);
 
+      user.saveToken();
+
       final docAdmin =
           await firestore.collection('admins').document(user.id).get();
-
       if (docAdmin.exists) {
         user.admin = true;
       }
-      // else {
-      //   user.admin = false;
-      // }
 
       notifyListeners();
     }
